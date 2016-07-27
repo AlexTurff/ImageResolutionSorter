@@ -58,7 +58,11 @@ namespace ImageSorter.Models
 
             if (image.Height >= _height && image.Width >= _width)
             {
-                File.Copy(image.FilePath,_destDir.FullName + $"\\{_orientation}{_width}x{_height}\\{StaticHelpers.MakeStringFileSystemSafe(StaticHelpers.GetStringFromBytes(image.ContentHash))}");
+                File.Copy(image.FilePath,_destDir.FullName + $"\\{_orientation}{_width}x{_height}\\{StaticHelpers.MakeStringFileSystemSafe(StaticHelpers.GetStringFromBytes(image.ContentHash))}.{image.FileExtension}");
+            }
+            else
+            {
+                _nextFilter.FilterImage(image);
             }
         }
     }

@@ -7,6 +7,7 @@ namespace ImageSorter.ViewModels
     public class ImageSorterViewModel
     {
         public SelectedDirectory SelectedDirectory { get; set; }
+        public TaskManager TaskManager { get; set; }
 
         //private string _folderPath = "";
 
@@ -44,6 +45,7 @@ namespace ImageSorter.ViewModels
         public ImageSorterViewModel()
         {
             SelectedDirectory = new SelectedDirectory();
+            TaskManager = new TaskManager(SelectedDirectory);
             //SelectedDirectory.PropertyChanged += (sender, args) =>
             //{
             //    NumberOfImages = SelectedDirectory.NumberOfImageFiles;

@@ -15,8 +15,8 @@ namespace ImageSorter.Models.ModelInterfaces
         long NumberOfImageBytes { get; }
         ConcurrentBag<ISelectedDirectory> SubDirectories { get; }
 
-        List<Task> CreateFilterTasks();
-        List<Task> CreateDiscoveryTasks();
+        List<Action> CreateFilterTasks();
+        List<Action> CreateDiscoveryTasks();
         Tuple<int, long> CountImagesAndBytes();
     }
 }

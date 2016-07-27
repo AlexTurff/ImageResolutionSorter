@@ -58,14 +58,14 @@ namespace ImageSorter.Models
         }
 
 
-        public List<Task> CreateDiscoveryTasks()
+        public List<Action> CreateDiscoveryTasks()
         {
             if (DirectoryInfo == null || !DirectoryInfo.Exists)
             {
                 return null;
             }
 
-            var taskList = new List<Task>();
+            var taskList = new List<Action>();
 
             ImageMetaList = new ConcurrentBag<IImage>();
             SubDirectories = new ConcurrentBag<ISelectedDirectory>();
@@ -93,7 +93,7 @@ namespace ImageSorter.Models
                 if (counter >=5 && counter % 5 == 0)
                 {
                     List<FileInfo> files = fileTaskGroups[fileTaskGroups.Count - 1];
-                    taskList.Add(new Task(() =>
+                    taskList.Add(new Action(() =>
                     {
                         try
                         {
@@ -123,9 +123,9 @@ namespace ImageSorter.Models
             return taskList;
         }
 
-        public List<Task> CreateFilterTasks() {
-
-            var taskList = new List<Task>();
+        public List<Action> CreateFilterTasks() {
+            //todo
+            var taskList = new List<Action>();
 
             foreach (var subDir in SubDirectories)
             {
