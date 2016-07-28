@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using System.Windows.Documents;
 using ImageSorter.Models.ModelInterfaces;
 using ImageSorter.ViewModels;
 using log4net;
@@ -58,15 +59,21 @@ namespace ImageSorter.Models
         }
 
 
-        public List<Action> CreateDiscoveryTasks()
+        public List<Action> CreateDiscoveryTasks(out int fileCount)
         {
+            fileCount = 0;
+            NumberOfImageBytes = 0;
+            NumberOfImageFiles = 0;
+
+            RaisePropertyChangedEvent("NumberOfImageBytes");
+            RaisePropertyChangedEvent("NumberOfImageFiles");
+
             if (DirectoryInfo == null || !DirectoryInfo.Exists)
             {
                 return null;
             }
 
             var taskList = new List<Action>();
-
             ImageMetaList = new ConcurrentBag<IImage>();
             SubDirectories = new ConcurrentBag<ISelectedDirectory>();
             var allFiles = DirectoryInfo.GetFiles();
@@ -80,8 +87,21 @@ namespace ImageSorter.Models
                     var selectedSubDirectory = new SelectedDirectory();
                     selectedSubDirectory.IncludeSubDirectories = IncludeSubDirectories;
                     selectedSubDirectory.DirectoryPath = directory.FullName;
+                    selectedSubDirectory.PropertyChanged += (sender, args) =>
+                    {
+                        if (args.PropertyName == "NumberOfImageFiles")
+                        {
+                            RaisePropertyChangedEvent("NumberOfImageFiles");
+                        }
+                        if (args.PropertyName == "NumberOfImageBytes")
+                        {
+                            RaisePropertyChangedEvent("NumberOfImageBytes");
+                        }
+                    };
                     SubDirectories.Add(selectedSubDirectory);
-                    taskList.AddRange(selectedSubDirectory.CreateDiscoveryTasks());
+                    int count;
+                    taskList.AddRange(selectedSubDirectory.CreateDiscoveryTasks(out count));
+                    fileCount += count;
                 }
             }
 
@@ -90,7 +110,11 @@ namespace ImageSorter.Models
 
             foreach (var file in allFiles)
             {
-                if (counter >=5 && counter % 5 == 0)
+                fileTaskGroups[fileTaskGroups.Count - 1].Add(file);
+
+                counter++;
+
+                if (counter == ImageMetaList.Count || counter >= 5 && counter % 5 == 0)
                 {
                     List<FileInfo> files = fileTaskGroups[fileTaskGroups.Count - 1];
                     taskList.Add(new Action(() =>
@@ -101,11 +125,14 @@ namespace ImageSorter.Models
                             {
                                 var image = Image.FromFile(taskFile.FullName);
                                 ImageMetaList.Add(new ImageMetaData(taskFile, image));
-                                NumberOfImageFiles ++;
+                                NumberOfImageFiles++;
                                 NumberOfImageBytes += taskFile.Length;
                                 image.Dispose();
                             }
-                            
+
+                            RaisePropertyChangedEvent("NumberOfImageFiles");
+                            RaisePropertyChangedEvent("NumberOfImageBytes");
+
                         }
                         catch (Exception e)
                         {
@@ -115,53 +142,85 @@ namespace ImageSorter.Models
                     fileTaskGroups.Add(new List<FileInfo>());
                 }
 
-                fileTaskGroups[fileTaskGroups.Count - 1].Add(file);
 
+            }
+
+            fileCount += allFiles.Length;
+            return taskList;
+        }
+
+        public List<Action> CreateFilterTasks(IImageFilter imageFilter)
+        {
+            var taskList = new List<Action>();
+
+            if (IncludeSubDirectories)
+            {
+                foreach (var subDir in SubDirectories)
+                {
+                    taskList.AddRange(subDir.CreateFilterTasks(imageFilter));
+                }
+            }
+
+
+            int counter = 0;
+            List<List<IImage>> allImages = new List<List<IImage>>();
+            allImages.Add(new List<IImage>());
+
+            foreach (var imageMeta in ImageMetaList)
+            {
+                allImages[allImages.Count - 1].Add(imageMeta);
                 counter++;
+
+                if (counter == ImageMetaList.Count || counter >= 5 && counter % 5 == 0)
+                {
+                    List<IImage> images = allImages[allImages.Count - 1];
+
+                    taskList.Add(new Action(() =>
+                    {
+                        try
+                        {
+                            foreach (var image in images)
+                            {
+                                imageFilter.FilterImage(image);
+                            }
+
+                        }
+                        catch (Exception e)
+                        {
+                            Log.ErrorFormat($"Failed to Filter Image at '{imageMeta.FilePath}' due to error {e}");
+                        }
+                    }));
+                    allImages.Add(new List<IImage>());
+                }
             }
 
             return taskList;
         }
 
-        public List<Action> CreateFilterTasks() {
-            //todo
-            var taskList = new List<Action>();
+        //public Tuple<int, long> CountImagesAndBytes()
+        //{
+        //    int images = 0;
+        //    long bytes = 0;
+        //    foreach (var directory in SubDirectories)
+        //    {
+        //        var subcount = directory.CountImagesAndBytes();
+        //        images += subcount.Item1;
+        //        bytes += subcount.Item2;
+        //    }
 
-            foreach (var subDir in SubDirectories)
-            {
-                taskList.AddRange(subDir.CreateFilterTasks());
-            }
+        //    foreach (var image in ImageMetaList)
+        //    {
+        //        images++;
+        //        bytes += image.FileByteSize;
+        //    }
 
-            foreach (var imageMeta in ImageMetaList)
-            {
-                
-            }
-        } 
+        //    NumberOfImageBytes = bytes;
+        //    NumberOfImageFiles = images;
 
-        public Tuple<int,long> CountImagesAndBytes()
-        {
-            int images = 0;
-            long bytes = 0;
-            foreach (var directory in SubDirectories)
-            {
-                var subcount = directory.CountImagesAndBytes();
-                images += subcount.Item1;
-                bytes += subcount.Item2;
-            }
+        //    RaisePropertyChangedEvent("NumberOfImageFiles");
+        //    RaisePropertyChangedEvent("NumberOfImageBytes");
 
-            foreach (var image in ImageMetaList)
-            {
-                images++;
-                bytes += image.FileByteSize;
-            }
-
-            NumberOfImageBytes = bytes;
-            NumberOfImageFiles = images;
-
-            RaisePropertyChangedEvent("NumberOfImageFiles");
-            RaisePropertyChangedEvent("NumberOfImageBytes");
-
-            return new Tuple<int, long>(images,bytes);
-        }
+        //    return new Tuple<int, long>(images, bytes);
+        //}
     }
 }

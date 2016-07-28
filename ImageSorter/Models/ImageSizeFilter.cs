@@ -6,63 +6,67 @@ using ImageSorter.Models.ModelInterfaces;
 
 namespace ImageSorter.Models
 {
-    public class ImageSizeFilter
+    public class ImageSizeFilter : IImageFilter
     {
-        private int _width;
-        private int _height;
-        private Orientations _orientation;
+        private int _long;
+        private int _short;
         private DirectoryInfo _destDir;
-        private Action<DirectoryInfo, IImage> _opOverride;
-        private ImageSizeFilter _nextFilter;
+        private Action<DirectoryInfo, IImage, int, int> _opOverride;
+        private IImageFilter _nextFilter;
 
-        public ImageSizeFilter(int side1, int side2, Orientations orientation, ImageSizeFilter nextFilter, DirectoryInfo destinationDirectory, Action<DirectoryInfo,IImage> operationOverride = null)
+        public ImageSizeFilter(int side1, int side2, IImageFilter nextFilter, DirectoryInfo destinationDirectory, Action<DirectoryInfo, IImage, int, int> operationOverride = null)
         {
-            _orientation = orientation;
             _nextFilter = nextFilter;
             _opOverride = operationOverride;
             _destDir = destinationDirectory;
+            _long = Math.Max(side1, side2);
+            _short = Math.Min(side1, side2);
 
-            switch (orientation)
-            {
-                case Orientations.Landscape:
-                    _width = Math.Max(side1, side2);
-                    _height = Math.Min(side1, side2);
-                    break;
-                case Orientations.Portrait:
-                    _width = Math.Min(side1, side2);
-                    _height = Math.Max(side1, side2);
-                    break;
-                case Orientations.Square:
-                    if (side1 == side2)
-                    {
-                        _height = side1;
-                        _width = side1;
-                    }
-                    else
-                    {
-                        throw new InvalidDataException();
-                    }
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(orientation), orientation, null);
-            }
         }
-
+        
         public void FilterImage(IImage image)
         {
             if (_opOverride != null)
             {
-                _opOverride(_destDir, image);
+                _opOverride(_destDir, image, _long, _short);
                 return;
             }
 
-            if (image.Height >= _height && image.Width >= _width)
+            if (image.Height > image.Width)
             {
-                File.Copy(image.FilePath,_destDir.FullName + $"\\{_orientation}{_width}x{_height}\\{StaticHelpers.MakeStringFileSystemSafe(StaticHelpers.GetStringFromBytes(image.ContentHash))}.{image.FileExtension}");
+                if (image.Height >= _long && image.Width >= _short)
+                {
+                    Directory.CreateDirectory(_destDir.FullName + $"\\P{_short}x{_long}\\");
+                    File.Copy(image.FilePath, _destDir.FullName + $"\\P{_short}x{_long}\\{StaticHelpers.MakeStringFileSystemSafe(StaticHelpers.GetStringFromBytes(image.ContentHash))}.{image.FileExtension}");
+                }
+                else
+                {
+                    _nextFilter.FilterImage(image);
+                }
+            }
+            else if (image.Width > image.Height)
+            {
+                if (image.Height >= _short && image.Width >= _long)
+                {
+                    Directory.CreateDirectory(_destDir.FullName + $"\\L{_long}x{_short}\\");
+                    File.Copy(image.FilePath, _destDir.FullName + $"\\L{_long}x{_short}\\{StaticHelpers.MakeStringFileSystemSafe(StaticHelpers.GetStringFromBytes(image.ContentHash))}.{image.FileExtension}");
+                }
+                else
+                {
+                    _nextFilter.FilterImage(image);
+                }
             }
             else
             {
-                _nextFilter.FilterImage(image);
+                if (image.Height >= _short && image.Width >= _long)
+                {
+                    Directory.CreateDirectory(_destDir.FullName + $"\\L{_long}x{_short}\\");
+                    File.Copy(image.FilePath, _destDir.FullName + $"\\S{_long}x{_short}\\{StaticHelpers.MakeStringFileSystemSafe(StaticHelpers.GetStringFromBytes(image.ContentHash))}.{image.FileExtension}");
+                }
+                else
+                {
+                    _nextFilter.FilterImage(image);
+                }
             }
         }
     }

@@ -31,7 +31,7 @@ namespace ImageSorter
             InitializeComponent();
             log.Info("Entering application.");
             ViewModel = new ImageSorterViewModel();
-            DataContext = ViewModel.SelectedDirectory;
+            DataContext = ViewModel;
         }
 
         private void SourceBrowseButton_OnClick(object sender, RoutedEventArgs e)
@@ -39,6 +39,23 @@ namespace ImageSorter
             var folderDialog = new System.Windows.Forms.FolderBrowserDialog {ShowNewFolderButton = false};
             folderDialog.ShowDialog();
             SourceTextBox.Text = folderDialog.SelectedPath;
+        }
+
+        private void DestinationBrowseButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            var folderDialog = new System.Windows.Forms.FolderBrowserDialog { ShowNewFolderButton = true };
+            folderDialog.ShowDialog();
+            DestinationTextBox.Text = folderDialog.SelectedPath;
+        }
+
+        private void StartButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            ViewModel.Start();
+        }
+
+        private void StopButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            ViewModel.Stop();
         }
     }
 }

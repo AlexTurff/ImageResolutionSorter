@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:System="clr-namespace:System;assembly=mscorlib"
-        xmlns:local="clr-namespace:ImageSorter"
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d"
         Title="MainWindow" Height="350" Width="525">
     <Window.Resources>
@@ -20,30 +20,68 @@
             <RowDefinition/>
             <RowDefinition/>
         </Grid.RowDefinitions>
-        <Grid>
+        <Grid Grid.Column="0" Grid.Row="0" ColumnSpan="2">
             <Grid.RowDefinitions>
                 <RowDefinition/>
                 <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
             </Grid.RowDefinitions>
-            <DockPanel Grid.Column="0" Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <DockPanel Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="2">
                 <TextBlock DockPanel.Dock="Left" Height="{StaticResource TextHeight}">Source Folder:</TextBlock>
                 <Button Name="SourceBrowseButton" DockPanel.Dock="Right" Height="{StaticResource TextHeight}" Click="SourceBrowseButton_OnClick">Browse</Button>
-                <TextBox Name="SourceTextBox" Height="{StaticResource TextHeight}" Text="{Binding Path=DirectoryPath, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBox Name="SourceTextBox" Height="{StaticResource TextHeight}" Text="{Binding Path=SourceDirectoryPath,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
             </DockPanel>
             <DockPanel Grid.Column="0" Grid.Row="1">
                 <TextBlock>Include Sub Directories?</TextBlock>
-                <CheckBox Name="SubDirectoryCheckBox" IsChecked="{Binding Path=IncludeSubDirectories, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}"></CheckBox>
+                <CheckBox Name="SubDirectoryCheckBox" IsChecked="{Binding Path=IncludeSubDirectories,Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}"></CheckBox>
+            </DockPanel>
+            <DockPanel Grid.Column="1" Grid.Row="1">
+                <TextBlock>Max Threads:</TextBlock>
+                <xctk:IntegerUpDown Maximum="50" Minimum="1" DefaultValue="1" Value="{Binding MaxThreads, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}"></xctk:IntegerUpDown>
+            </DockPanel>
+            <DockPanel Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2">
+                <TextBlock DockPanel.Dock="Left" Height="{StaticResource TextHeight}">Destination Folder:</TextBlock>
+                <Button Name="DestinationBrowseButton" DockPanel.Dock="Right" Height="{StaticResource TextHeight}" Click="DestinationBrowseButton_OnClick">Browse</Button>
+                <TextBox Name="DestinationTextBox" Height="{StaticResource TextHeight}" Text="{Binding Path=DestinationDirectoryPath, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}"/>
+            </DockPanel>
+            <Button Name="StartButton" Grid.Column="0" Grid.Row="3" Click="StartButton_OnClick">Start</Button>
+            <Button Name="StopButton"  Grid.Column="1" Grid.Row="3" Click="StopButton_OnClick">Stop</Button>
+        </Grid>
+
+        <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2">
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <DockPanel Grid.Row="0" Grid.Column="0">
+                <TextBlock DockPanel.Dock="Left">Number of images:</TextBlock>
+                <TextBlock Name="NumberOfImagesTextBlock" Text="{Binding Path=NumberOfImages, Mode=OneWay}"></TextBlock>
+            </DockPanel>
+            <DockPanel Grid.Row="0" Grid.Column="1">
+                <TextBlock DockPanel.Dock="Left">Size of images:</TextBlock>
+                <TextBlock Name="AllImageSizeTextBlock" Text="{Binding Path=SizeOfImages, Mode=OneWay}"></TextBlock>
+            </DockPanel>
+
+            <DockPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2">
+                <TextBlock DockPanel.Dock="Left" Width="120">Discovery Progress:</TextBlock>
+                <ProgressBar Minimum="0" Maximum="{Binding TotalFiles}" Value="{Binding NumberOfImages, Mode=OneWay}"></ProgressBar>
+            </DockPanel>
+
+            <DockPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2">
+                <TextBlock DockPanel.Dock="Left" Width="120">Filter Progress:</TextBlock>
+                <ProgressBar></ProgressBar>
+
             </DockPanel>
         </Grid>
-        <DockPanel Grid.Column="1" Grid.Row="0" Margin="3">
-            <DockPanel DockPanel.Dock="Top">
-                <TextBlock DockPanel.Dock="Left">Number of images:</TextBlock>
-                <TextBlock Name="NumberOfImagesTextBlock" Text="{Binding Path=NumberOfImageFiles, Mode=OneWay}"></TextBlock>
-            </DockPanel>
-            <DockPanel DockPanel.Dock="Top">
-                <TextBlock DockPanel.Dock="Left">Size of images:</TextBlock>
-                <TextBlock Name="AllImageSizeTextBlock" Text="{Binding Path=NumberOfImageBytes, Mode=OneWay}"></TextBlock>
-            </DockPanel>
-        </DockPanel>
     </Grid>
 </Window>
