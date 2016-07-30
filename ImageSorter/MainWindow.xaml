@@ -6,7 +6,7 @@
         xmlns:System="clr-namespace:System;assembly=mscorlib"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
+        Title="ImageFilter" Height="350" Width="525">
     <Window.Resources>
         <System:Double x:Key="TextHeight">17</System:Double>
     </Window.Resources>
@@ -79,7 +79,7 @@
 
             <DockPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2">
                 <TextBlock DockPanel.Dock="Left" Width="120">Filter Progress:</TextBlock>
-                <ProgressBar></ProgressBar>
+                <ProgressBar Minimum="0" Maximum="{Binding TotalFiles}" Value="{Binding FilteredImages, Mode=OneWay}"></ProgressBar>
 
             </DockPanel>
         </Grid>

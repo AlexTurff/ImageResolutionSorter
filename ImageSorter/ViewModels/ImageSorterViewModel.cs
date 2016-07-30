@@ -6,7 +6,7 @@ using ImageSorter.Models;
 
 namespace ImageSorter.ViewModels
 {
-    public class ImageSorterViewModel: NotifyPropertyChanged
+    public class ImageSorterViewModel : NotifyPropertyChanged
     {
         public SelectedDirectory SelectedDirectory { get; set; }
         public TaskManager TaskManager { get; set; }
@@ -48,7 +48,7 @@ namespace ImageSorter.ViewModels
                         TaskManager.DestinationDirectory = dir;
                     }
                 }
-                
+
 
             }
         }
@@ -82,25 +82,49 @@ namespace ImageSorter.ViewModels
         public int NumberOfImages { get; private set; }
         public long SizeOfImages { get; private set; }
         public int TotalFiles { get; private set; }
+        public int FilteredImages { get; private set; }
+
+        private DateTime TimeOfLastProgressUpdate { get; set; }
 
         public ImageSorterViewModel()
         {
             SelectedDirectory = new SelectedDirectory();
             TaskManager = new TaskManager(SelectedDirectory);
+            TimeOfLastProgressUpdate = DateTime.Now;
+
             SelectedDirectory.PropertyChanged += (sender, args) =>
             {
-                if (args.PropertyName == "NumberOfImageFiles")
+                if (DateTime.Now - TimeOfLastProgressUpdate > TimeSpan.FromSeconds(1))
                 {
-                    NumberOfImages = SelectedDirectory.NumberOfImageFiles;
+                    TimeOfLastProgressUpdate = DateTime.Now;
+
+                    if (args.PropertyName == "NumberOfImageFiles" || args.PropertyName == "NumberOfImageBytes")
+                    {
+                        var numAndSizeOfImages = SelectedDirectory.CountImagesAndBytes();
+                        NumberOfImages = numAndSizeOfImages.Item1;
+                        SizeOfImages = numAndSizeOfImages.Item2;
+
+                        RaisePropertyChangedEvent("NumberOfImages");
+                        RaisePropertyChangedEvent("SizeOfImages");
+                    }
+                    else if (args.PropertyName == "NumberOfImagesFiltered")
+                    {
+                        FilteredImages = SelectedDirectory.CountNumberOfFilteredImages();
+                        RaisePropertyChangedEvent("FilteredImages");
+                    }
+                }
+                if (args.PropertyName == "Finished")
+                {
+                    var numAndSizeOfImages = SelectedDirectory.CountImagesAndBytes();
+                    NumberOfImages = numAndSizeOfImages.Item1;
+                    SizeOfImages = numAndSizeOfImages.Item2;
+                    FilteredImages = SelectedDirectory.CountNumberOfFilteredImages();
+
+                    RaisePropertyChangedEvent("FilteredImages");
                     RaisePropertyChangedEvent("NumberOfImages");
-
-                }
-                if (args.PropertyName == "NumberOfImageBytes")
-                {
-                    SizeOfImages = SelectedDirectory.NumberOfImageBytes;
                     RaisePropertyChangedEvent("SizeOfImages");
-
                 }
+
             };
 
             TaskManager.PropertyChanged += (sender, args) =>

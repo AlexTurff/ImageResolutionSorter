@@ -13,10 +13,14 @@ namespace ImageSorter.Models.ModelInterfaces
         bool IncludeSubDirectories { get; set; }
         int NumberOfImageFiles { get; }
         long NumberOfImageBytes { get; }
+        int NumberOfImagesFiltered { get; }
+
         ConcurrentBag<ISelectedDirectory> SubDirectories { get; }
 
         List<Action> CreateFilterTasks(IImageFilter imageFilter);
         List<Action> CreateDiscoveryTasks(out int fileCount);
-        //Tuple<int, long> CountImagesAndBytes();
+        Tuple<int, long> CountImagesAndBytes();
+        int CountNumberOfFilteredImages();
+        void FinishUp();
     }
 }

@@ -42,6 +42,10 @@ namespace ImageSorter.Models
             Parallel.Invoke(
                 new ParallelOptions() {CancellationToken = CancellationToken, MaxDegreeOfParallelism = MaxThreads},
                 filterTasks.ToArray()); //this should block
+
+            SourceDirectory.FinishUp();
+
+            Thread.Sleep(10000);
         }
 
         public void Stop()

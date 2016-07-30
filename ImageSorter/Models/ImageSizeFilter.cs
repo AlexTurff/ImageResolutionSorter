@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.IO;
 using ImageSorter.Helpers;
 using ImageSorter.Models.Enums;
@@ -11,6 +12,7 @@ namespace ImageSorter.Models
         private int _long;
         private int _short;
         private DirectoryInfo _destDir;
+        private ConcurrentDictionary<string, bool> CurrentRunsHashes { get; set; }
         private Action<DirectoryInfo, IImage, int, int> _opOverride;
         private IImageFilter _nextFilter;
 
@@ -21,9 +23,9 @@ namespace ImageSorter.Models
             _destDir = destinationDirectory;
             _long = Math.Max(side1, side2);
             _short = Math.Min(side1, side2);
-
+            CurrentRunsHashes = new ConcurrentDictionary<string, bool>();
         }
-        
+
         public void FilterImage(IImage image)
         {
             if (_opOverride != null)
@@ -36,8 +38,16 @@ namespace ImageSorter.Models
             {
                 if (image.Height >= _long && image.Width >= _short)
                 {
-                    Directory.CreateDirectory(_destDir.FullName + $"\\P{_short}x{_long}\\");
-                    File.Copy(image.FilePath, _destDir.FullName + $"\\P{_short}x{_long}\\{StaticHelpers.MakeStringFileSystemSafe(StaticHelpers.GetStringFromBytes(image.ContentHash))}.{image.FileExtension}");
+                    if (CurrentRunsHashes.TryAdd(StaticHelpers.GetStringFromBytes(image.ContentHash), false))
+                    {
+                        Directory.CreateDirectory(_destDir.FullName + $"\\P{_short}x{_long}\\");
+                        File.Copy(image.FilePath, _destDir.FullName + $"\\P{_short}x{_long}\\{StaticHelpers.MakeStringFileSystemSafe(StaticHelpers.GetStringFromBytes(image.ContentHash))}.{image.FileExtension}");
+                    }
+                    else
+                    {
+                        CurrentRunsHashes.TryUpdate(StaticHelpers.GetStringFromBytes(image.ContentHash), true, false);
+                    }
+
                 }
                 else
                 {
@@ -48,8 +58,15 @@ namespace ImageSorter.Models
             {
                 if (image.Height >= _short && image.Width >= _long)
                 {
-                    Directory.CreateDirectory(_destDir.FullName + $"\\L{_long}x{_short}\\");
-                    File.Copy(image.FilePath, _destDir.FullName + $"\\L{_long}x{_short}\\{StaticHelpers.MakeStringFileSystemSafe(StaticHelpers.GetStringFromBytes(image.ContentHash))}.{image.FileExtension}");
+                    if (CurrentRunsHashes.TryAdd(StaticHelpers.GetStringFromBytes(image.ContentHash), false))
+                    {
+                        Directory.CreateDirectory(_destDir.FullName + $"\\L{_long}x{_short}\\");
+                        File.Copy(image.FilePath, _destDir.FullName + $"\\L{_long}x{_short}\\{StaticHelpers.MakeStringFileSystemSafe(StaticHelpers.GetStringFromBytes(image.ContentHash))}.{image.FileExtension}");
+                    }
+                    else
+                    {
+                        CurrentRunsHashes.TryUpdate(StaticHelpers.GetStringFromBytes(image.ContentHash), true, false);
+                    }
                 }
                 else
                 {
@@ -60,8 +77,15 @@ namespace ImageSorter.Models
             {
                 if (image.Height >= _short && image.Width >= _long)
                 {
-                    Directory.CreateDirectory(_destDir.FullName + $"\\L{_long}x{_short}\\");
-                    File.Copy(image.FilePath, _destDir.FullName + $"\\S{_long}x{_short}\\{StaticHelpers.MakeStringFileSystemSafe(StaticHelpers.GetStringFromBytes(image.ContentHash))}.{image.FileExtension}");
+                    if (CurrentRunsHashes.TryAdd(StaticHelpers.GetStringFromBytes(image.ContentHash), false))
+                    {
+                        Directory.CreateDirectory(_destDir.FullName + $"\\L{_long}x{_short}\\");
+                        File.Copy(image.FilePath, _destDir.FullName + $"\\S{_long}x{_short}\\{StaticHelpers.MakeStringFileSystemSafe(StaticHelpers.GetStringFromBytes(image.ContentHash))}.{image.FileExtension}");
+                    }
+                    else
+                    {
+                        CurrentRunsHashes.TryUpdate(StaticHelpers.GetStringFromBytes(image.ContentHash), true, false);
+                    }
                 }
                 else
                 {

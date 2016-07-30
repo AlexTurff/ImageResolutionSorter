@@ -34,8 +34,7 @@ namespace ImageSorter.Helpers
         /// </summary>
         /// <param name="bytes"></param>
         /// <returns></returns>
-        public static string GetStringFromBytes(byte[] bytes)
-        {
+        public static string GetStringFromBytes(byte[] bytes){
             
             return Convert.ToBase64String(bytes);
         }
